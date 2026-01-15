@@ -27,11 +27,7 @@ This will download and install all the necessary libraries and dependencies defi
 This project requires a Gemini API key.
 1.  Check if you have a `.env.local` file in the root directory.
 2.  If not, create one.
-3.  Add your API key to the file:
 
-```env
-GEMINI_API_KEY=your_api_key_here
-```
 
 ### 3. Running the Development Server
 
