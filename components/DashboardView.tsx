@@ -4,6 +4,7 @@ import {
     Star, ExternalLink, Loader2, Search, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import StatCard from './StatCard';
+import StatusDropdown from './StatusDropdown';
 import { EmailStats } from '../types';
 
 interface Agent {
@@ -30,7 +31,23 @@ interface DashboardViewProps {
     isLoading: boolean;
     agentSummary: { sent: number; replies: number } | null;
     onAgentClick: (agent: Agent) => void;
+    onStatusUpdate: (email: string, field: 'Lead Status' | 'Follow Up Status', value: string) => void;
 }
+
+const LEAD_STATUS_OPTIONS = [
+    'no email sent',
+    'cold email sent',
+    'completed',
+    'replied',
+    'bounced'
+];
+
+const FOLLOW_UP_STATUS_OPTIONS = [
+    'No Follow Up Sent',
+    'one follow up sent',
+    'two follow up sent',
+    'three follow up sent'
+];
 
 const ROWS_PER_PAGE = 50;
 
@@ -41,7 +58,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     activityData,
     isLoading,
     agentSummary,
-    onAgentClick
+    onAgentClick,
+    onStatusUpdate
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -261,14 +279,20 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                                     <div className="text-[10px] font-medium text-slate-400 lowercase tracking-wide">{record["Job Title"] !== '—' ? record["Job Title"] : <span className="text-slate-300 italic">No Title</span>}</div>
                                                 </td>
                                                 <td className="px-6 py-6 text-center">
-                                                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${getLeadStatusStyle(record["Lead Status"])}`}>
-                                                        {record["Lead Status"]}
-                                                    </span>
+                                                    <StatusDropdown
+                                                        value={record["Lead Status"]}
+                                                        options={LEAD_STATUS_OPTIONS}
+                                                        onChange={(val) => onStatusUpdate(record["Email"], 'Lead Status', val)}
+                                                        getStyle={getLeadStatusStyle}
+                                                    />
                                                 </td>
                                                 <td className="px-6 py-6 text-center">
-                                                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${getFollowUpStatusStyle(record["Follow Up Status"])}`}>
-                                                        {record["Follow Up Status"]}
-                                                    </span>
+                                                    <StatusDropdown
+                                                        value={record["Follow Up Status"]}
+                                                        options={FOLLOW_UP_STATUS_OPTIONS}
+                                                        onChange={(val) => onStatusUpdate(record["Email"], 'Follow Up Status', val)}
+                                                        getStyle={getFollowUpStatusStyle}
+                                                    />
                                                 </td>
                                                 <td className="px-6 py-6 text-right text-[11px] font-bold text-slate-400 tabular-nums">
                                                     {record["Time"]}
