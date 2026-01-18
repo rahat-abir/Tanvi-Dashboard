@@ -121,35 +121,32 @@ const App: React.FC = () => {
   const handleViewChange = async (view: 'dashboard' | 'linkedin') => {
     setCurrentView(view);
 
+
     if (view === 'linkedin' && linkedInData.length === 0) {
       await fetchLinkedInData();
     }
   };
 
-  const handleAgentClick = async (agent: Agent) => {
+  const fetchAgentData = async (agent: Agent) => {
     setIsLoading(true);
-    setSelectedAgentName(agent.name);
     setActivityData([]);
 
     try {
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tabName: agent.payload }),
+        body: JSON.stringify({ tabName: agent.payload, action: 'read' }),
       });
 
       if (!response.ok) throw new Error('Webhook failed');
 
       const rawData = await response.json();
-
-      // DEBUG: Log raw response for inspection
       console.log('🔍 Raw webhook response:', rawData);
 
-      // ABSOLUTE RULE: Treat response as an array and load every element
+      // Rule: Treat response as array and load every element
       let records: any[] = [];
 
       if (Array.isArray(rawData)) {
-        // Check if it's a wrapped array (common in n8n)
         if (rawData.length === 1 && Array.isArray(rawData[0])) {
           records = rawData[0];
         } else if (rawData.length === 1 && rawData[0].json && Array.isArray(rawData[0].json)) {
@@ -157,10 +154,8 @@ const App: React.FC = () => {
         } else if (rawData.length === 1 && rawData[0].body && Array.isArray(rawData[0].body)) {
           records = rawData[0].body;
         } else if (rawData.every((item: any) => item && item.json)) {
-          // All items have .json property (n8n format)
           records = rawData.map((item: any) => item.json);
         } else {
-          // Direct array of records
           records = rawData;
         }
       } else if (rawData && typeof rawData === 'object') {
@@ -184,10 +179,8 @@ const App: React.FC = () => {
       }
 
       const normalizedActivities: ActivityRecord[] = records.map((item: any) => {
-        // Handle n8n wrapping items in a 'json' property
         const source = item.json || item;
 
-        // Helper to find key even with trailing spaces or casing differences
         const findVal = (key: string) => {
           const keys = Object.keys(source);
           const foundKey = keys.find(k => k.trim().toLowerCase() === key.trim().toLowerCase());
@@ -200,7 +193,7 @@ const App: React.FC = () => {
           "Email": findVal("Email"),
           "Company": findVal("Company"),
           "Job Title": findVal("Job Title"),
-          "Lead Status": findVal("Lead Status"), // Trims automatically in findVal
+          "Lead Status": findVal("Lead Status"),
           "Follow Up Status": findVal("Follow Up Status"),
           "Time": findVal("Time"),
           "sent to tanvi": findVal("sent to tanvi")
@@ -209,10 +202,8 @@ const App: React.FC = () => {
 
       setActivityData(normalizedActivities);
 
-      // Update Dashboard Overview Stats with full array analysis
+      // Update Dashboard Overview Stats
       const total = normalizedActivities.length;
-
-      // Helper functions to normalize status strings
       const getLeadStatus = (a: ActivityRecord) => (a["Lead Status"] || "").toLowerCase().trim();
       const getFollowUpStatus = (a: ActivityRecord) => (a["Follow Up Status"] || "").toLowerCase().trim();
 
@@ -251,6 +242,51 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAgentClick = async (agent: Agent) => {
+    setSelectedAgentName(agent.name);
+    await fetchAgentData(agent);
+  };
+
+  const handleStatusUpdate = async (email: string, field: 'Lead Status' | 'Follow Up Status', value: string) => {
+    if (!selectedAgentName) return;
+
+    // Find the agent payload from the name
+    const agent = AGENTS.find(a => a.name === selectedAgentName);
+    if (!agent) return;
+
+    // Optimistic update
+    setActivityData(prev => prev.map(record => {
+      if (record.Email === email) {
+        return { ...record, [field]: value };
+      }
+      return record;
+    }));
+
+    try {
+      console.log(`Updating ${field} for ${email} to ${value}`);
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tabName: agent.payload,
+          action: 'write',
+          email,
+          field,
+          value
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Status update webhook failed');
+      }
+
+      const responseText = await response.text();
+      console.log('Status update successful, Response:', responseText);
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
       <Navbar currentView={currentView} onViewChange={handleViewChange} />
@@ -266,6 +302,7 @@ const App: React.FC = () => {
               isLoading={isLoading}
               agentSummary={agentSummary}
               onAgentClick={handleAgentClick}
+              onStatusUpdate={handleStatusUpdate}
             />
           ) : (
             <LinkedInView
