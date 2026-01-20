@@ -65,6 +65,49 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const [currentPage, setCurrentPage] = useState(1);
     const [leadStatusFilter, setLeadStatusFilter] = useState<string>('all');
     const [followUpStatusFilter, setFollowUpStatusFilter] = useState<string>('all');
+    const [dateFilter, setDateFilter] = useState<string>('all');
+
+    const isDateInFrame = (dateString: string, frame: string): boolean => {
+        if (!dateString) return false;
+
+        // Helper to get EST date object (ignoring time for date comparisons)
+        const getESTDate = (d?: Date) => {
+            const date = d || new Date();
+            // Convert to EST string and back to date to align timezones roughly for date comparison
+            const estString = date.toLocaleString("en-US", { timeZone: "America/New_York" });
+            const estDate = new Date(estString);
+            estDate.setHours(0, 0, 0, 0);
+            return estDate;
+        };
+
+        const targetDate = new Date(dateString);
+        // Basic check if date is valid
+        if (isNaN(targetDate.getTime())) return false;
+
+        // Normalize target date to midnight
+        targetDate.setHours(0, 0, 0, 0);
+
+        const todayEST = getESTDate();
+
+        switch (frame) {
+            case 'today':
+                return targetDate.getTime() === todayEST.getTime();
+            case 'yesterday':
+                const yesterdayEST = new Date(todayEST);
+                yesterdayEST.setDate(todayEST.getDate() - 1);
+                return targetDate.getTime() === yesterdayEST.getTime();
+            case 'week':
+                const weekAgoEST = new Date(todayEST);
+                weekAgoEST.setDate(todayEST.getDate() - 7);
+                return targetDate >= weekAgoEST && targetDate <= todayEST;
+            case 'month':
+                const monthAgoEST = new Date(todayEST);
+                monthAgoEST.setDate(todayEST.getDate() - 30);
+                return targetDate >= monthAgoEST && targetDate <= todayEST;
+            default:
+                return true;
+        }
+    };
 
     const getLeadStatusStyle = (status: string) => {
         const s = status.toLowerCase();
@@ -115,9 +158,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             const matchesFollowUpStatus = followUpStatusFilter === 'all' ||
                 record["Follow Up Status"] === followUpStatusFilter;
 
-            return matchesSearch && matchesLeadStatus && matchesFollowUpStatus;
+            // Date filter
+            const matchesDate = dateFilter === 'all' || isDateInFrame(record["Time"], dateFilter);
+
+            return matchesSearch && matchesLeadStatus && matchesFollowUpStatus && matchesDate;
         });
-    }, [activityData, searchQuery, leadStatusFilter, followUpStatusFilter]);
+    }, [activityData, searchQuery, leadStatusFilter, followUpStatusFilter, dateFilter]);
 
     const totalItems = filteredActivities.length;
     const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
@@ -237,6 +283,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                             {uniqueFollowUpStatuses.map(status => (
                                                 <option key={status} value={status}>{status}</option>
                                             ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Date Filter */}
+                                    <div className="relative min-w-[200px]">
+                                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        <select
+                                            value={dateFilter}
+                                            onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
+                                            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all appearance-none cursor-pointer"
+                                            style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                                        >
+                                            <option value="all">All Time</option>
+                                            <option value="today">Today</option>
+                                            <option value="yesterday">Yesterday</option>
+                                            <option value="week">Within a week</option>
+                                            <option value="month">Within a month</option>
                                         </select>
                                     </div>
                                 </div>
