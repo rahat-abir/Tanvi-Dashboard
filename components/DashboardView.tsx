@@ -39,7 +39,8 @@ const LEAD_STATUS_OPTIONS = [
     'cold email sent',
     'completed',
     'replied',
-    'bounced'
+    'bounced',
+    'not qualified'
 ];
 
 const FOLLOW_UP_STATUS_OPTIONS = [
@@ -116,6 +117,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         if (s.includes('completed')) return 'bg-blue-100 text-blue-700';
         if (s.includes('cold')) return 'bg-green-100 text-green-700';
         if (s.includes('no email')) return 'bg-slate-100 text-slate-600';
+        if (s === 'not qualified') return 'bg-[#3d3d3d] text-white';
         return 'bg-slate-100 text-slate-600';
     };
 

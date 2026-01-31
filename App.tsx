@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import DashboardView from './components/DashboardView';
 import LinkedInView from './components/LinkedInView';
+import SystemSearchView from './components/SystemSearchView';
 import { MOCK_STATS } from './constants';
 import { EmailStats } from './types';
 
@@ -34,7 +35,7 @@ const WEBHOOK_URL = 'https://layerland.app.n8n.cloud/webhook/8c3e2219-a767-445a-
 const LINKEDIN_WEBHOOK_URL = 'https://layerland.app.n8n.cloud/webhook/3712c2e6-46cd-4348-a126-78017955b1cc';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'linkedin'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'linkedin' | 'system-search'>('dashboard');
   const [selectedAgentName, setSelectedAgentName] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -118,7 +119,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleViewChange = async (view: 'dashboard' | 'linkedin') => {
+  const handleViewChange = async (view: 'dashboard' | 'linkedin' | 'system-search') => {
     setCurrentView(view);
 
 
@@ -304,6 +305,8 @@ const App: React.FC = () => {
               onAgentClick={handleAgentClick}
               onStatusUpdate={handleStatusUpdate}
             />
+          ) : currentView === 'system-search' ? (
+            <SystemSearchView />
           ) : (
             <LinkedInView
               activityData={linkedInData}
