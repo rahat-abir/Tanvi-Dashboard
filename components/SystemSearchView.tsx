@@ -94,6 +94,19 @@ const SystemSearchView: React.FC = () => {
         if (e.key === 'Enter') handleSearch();
     };
 
+    const getLeadStatusStyle = (status: string) => {
+        const s = (status || '').toLowerCase();
+        if (s.includes('replied')) return 'bg-red-100 text-red-700';
+        if (s.includes('bounce')) return 'bg-pink-100 text-pink-700';
+        if (s.includes('completed')) return 'bg-blue-100 text-blue-700';
+        if (s.includes('cold') || s.includes('contact email')) return 'bg-green-100 text-green-700';
+        if (s.includes('out of office')) return 'bg-yellow-100 text-yellow-700';
+        if (s.includes('meeting') || s.includes('vendor') || s.includes('future')) return 'bg-purple-100 text-purple-700';
+        if (s.includes('not qualified') || s.includes('lost') || s.includes('no response') || s.includes('ghost')) return 'bg-[#3d3d3d] text-white';
+        if (s.includes('no email') || s.includes('-none-')) return 'bg-slate-100 text-slate-600';
+        return 'bg-slate-100 text-slate-600';
+    };
+
     return (
         <div className="animate-in fade-in slide-in-from-top-4 duration-500 min-h-[500px] flex flex-col">
 
@@ -145,16 +158,25 @@ const SystemSearchView: React.FC = () => {
                         {/* Mock Filters */}
                         <select className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/20" value={leadStatusFilter} onChange={(e) => setLeadStatusFilter(e.target.value)}>
                             <option value="all">All Lead Status</option>
-                            <option value="cold">Cold</option>
-                            <option value="replied">Replied</option>
-                            <option value="not qualified">Not Qualified</option>
+                            {[
+                                '-None-', 'Not Contacted (cold)', 'Out of Office', 'Replied',
+                                '1st contact email', '2nd contact email', '3rd contact email',
+                                'No Response', 'Not Qualified Lead', 'Had a Meeting',
+                                'Post meeting ghost', 'Sent Vendor Onboarding Forms',
+                                'Contact in Future', 'Bounced Email', 'Lost Lead'
+                            ].map(status => (
+                                <option key={status} value={status}>{status}</option>
+                            ))}
                         </select>
 
                         <select className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/20" value={followUpStatusFilter} onChange={(e) => setFollowUpStatusFilter(e.target.value)}>
                             <option value="all">All Follow-up Status</option>
-                            <option value="none">None</option>
-                            <option value="one">One</option>
-                            <option value="two">Two</option>
+                            {[
+                                '-None-', 'No Follow Up Sent', 'Out Of Office',
+                                '1 Follow up sent', '2 Follow ups sent'
+                            ].map(status => (
+                                <option key={status} value={status}>{status}</option>
+                            ))}
                         </select>
 
                         <select className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/20" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
@@ -203,10 +225,7 @@ const SystemSearchView: React.FC = () => {
                                                 <div className="text-xs text-slate-500">{row.JobTitle}</div>
                                             </td>
                                             <td className="px-6 py-5">
-                                                <span className={`px-2 py-1 rounded-md text-xs font-bold 
-                                                    ${row.LeadStatus === 'not qualified' ? 'bg-[#3d3d3d] text-white' :
-                                                        row.LeadStatus.includes('cold') ? 'bg-green-100 text-green-700' :
-                                                            'bg-slate-100 text-slate-600'}`}>
+                                                <span className={`px-2 py-1 rounded-md text-xs font-bold ${getLeadStatusStyle(row.LeadStatus)}`}>
                                                     {row.LeadStatus}
                                                 </span>
                                             </td>

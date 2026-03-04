@@ -35,19 +35,29 @@ interface DashboardViewProps {
 }
 
 const LEAD_STATUS_OPTIONS = [
-    'no email sent',
-    'cold email sent',
-    'completed',
-    'replied',
-    'bounced',
-    'not qualified'
+    '-None-',
+    'Not Contacted (cold)',
+    'Out of Office',
+    'Replied',
+    '1st contact email',
+    '2nd contact email',
+    '3rd contact email',
+    'No Response',
+    'Not Qualified Lead',
+    'Had a Meeting',
+    'Post meeting ghost',
+    'Sent Vendor Onboarding Forms',
+    'Contact in Future',
+    'Bounced Email',
+    'Lost Lead'
 ];
 
 const FOLLOW_UP_STATUS_OPTIONS = [
+    '-None-',
     'No Follow Up Sent',
-    'one follow up sent',
-    'two follow up sent',
-    'three follow up sent'
+    'Out Of Office',
+    '1 Follow up sent',
+    '2 Follow ups sent'
 ];
 
 const ROWS_PER_PAGE = 50;
@@ -115,23 +125,27 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         if (s.includes('replied')) return 'bg-red-100 text-red-700';
         if (s.includes('bounce')) return 'bg-pink-100 text-pink-700';
         if (s.includes('completed')) return 'bg-blue-100 text-blue-700';
-        if (s.includes('cold')) return 'bg-green-100 text-green-700';
-        if (s.includes('no email')) return 'bg-slate-100 text-slate-600';
-        if (s === 'not qualified') return 'bg-[#3d3d3d] text-white';
+        if (s.includes('cold') || s.includes('contact email')) return 'bg-green-100 text-green-700';
+        if (s.includes('out of office')) return 'bg-yellow-100 text-yellow-700';
+        if (s.includes('meeting') || s.includes('vendor') || s.includes('future')) return 'bg-purple-100 text-purple-700';
+        if (s.includes('not qualified') || s.includes('lost') || s.includes('no response') || s.includes('ghost')) return 'bg-[#3d3d3d] text-white';
+        if (s.includes('no email') || s.includes('-none-')) return 'bg-slate-100 text-slate-600';
         return 'bg-slate-100 text-slate-600';
     };
 
     const getFollowUpStatusStyle = (status: string) => {
         const s = status.toLowerCase();
-        if (s.includes('three')) return 'bg-red-100 text-red-700';
-        if (s.includes('two')) return 'bg-yellow-100 text-yellow-700';
-        if (s.includes('one')) return 'bg-green-100 text-green-700';
+        if (s.includes('2')) return 'bg-yellow-100 text-yellow-700';
+        if (s.includes('1')) return 'bg-green-100 text-green-700';
+        if (s.includes('out of office')) return 'bg-purple-100 text-purple-700';
+        if (s.includes('no follow up') || s.includes('-none-')) return 'bg-slate-100 text-slate-600';
         return 'bg-slate-100 text-slate-600';
     };
 
     // Extract unique status values for filter dropdowns
+
     const uniqueLeadStatuses = useMemo(() => {
-        const statuses = new Set(activityData.map(record => record["Lead Status"]));
+        const statuses = new Set([...LEAD_STATUS_OPTIONS, ...activityData.map(record => record["Lead Status"])]);
         return Array.from(statuses).sort();
     }, [activityData]);
 
