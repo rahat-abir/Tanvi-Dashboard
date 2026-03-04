@@ -213,13 +213,13 @@ const App: React.FC = () => {
       const completed = normalizedActivities.filter(a => {
         const leadStatus = getLeadStatus(a);
         const followUpStatus = getFollowUpStatus(a);
-        return leadStatus.includes('cold') && followUpStatus.includes('three');
+        return (leadStatus.includes('cold') || leadStatus.includes('contact email')) && followUpStatus.includes('2 follow');
       }).length;
 
       const cold = normalizedActivities.filter(a => {
         const leadStatus = getLeadStatus(a);
         const followUpStatus = getFollowUpStatus(a);
-        return leadStatus.includes('cold') && !followUpStatus.includes('three');
+        return (leadStatus.includes('cold') || leadStatus.includes('contact email')) && !followUpStatus.includes('2 follow');
       }).length;
 
       const bounced = normalizedActivities.filter(a => getLeadStatus(a).includes('bounce')).length;
@@ -227,7 +227,7 @@ const App: React.FC = () => {
       const emailsToSend = normalizedActivities.filter(a => {
         const leadStatus = getLeadStatus(a);
         const followUpStatus = getFollowUpStatus(a);
-        return leadStatus.includes('no email') && followUpStatus.includes('no follow up');
+        return (leadStatus.includes('no email') || leadStatus.includes('-none-')) && (followUpStatus.includes('no follow up') || followUpStatus.includes('-none-'));
       }).length;
 
 
